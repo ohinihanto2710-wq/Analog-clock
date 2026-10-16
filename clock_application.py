@@ -4,22 +4,32 @@ import math
 
 RADIUS = 200
 
+THEMES = {
+    "sombre": {"bg": "black", "fg": "white"},
+    "clair": {"bg": "white", "fg": "black"},
+}
+theme = "sombre"
+
+JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
+        "août", "septembre", "octobre", "novembre", "décembre"]
+
 wn = turtle.Screen()
 wn.title("Analog Clock")
-wn.bgcolor("black")
+wn.bgcolor(THEMES[theme]["bg"])
 wn.setup(500, 500)
-wn.tracer(0)  # pas d'animation intermédiaire -> pas de clignotement
+wn.tracer(0)  # pas d'animation intermediaire -> pas de clignotement
 
 clock = turtle.Turtle()
 clock.hideturtle()
 
 def polar(r, angle):
-    """Convertit (rayon, angle en degrés depuis 12h, sens horaire) en (x, y)."""
+    """Convertit (rayon, angle en degres depuis 12h, sens horaire) en (x, y)."""
     a = math.radians(90 - angle)
     return r * math.cos(a), r * math.sin(a)
 
-def draw_ticks():
-    clock.color("white")
+def draw_ticks(fg):
+    clock.color(fg)
     for i in range(60):
         angle = i * 6
         is_hour = i % 5 == 0
@@ -33,25 +43,30 @@ def draw_ticks():
         clock.goto(x2, y2)
     clock.penup()
 
-def draw_face():
-    # Cercle centré sur (0, 0)
+def draw_face(fg, now):
+    # Cercle centre sur (0, 0)
     clock.penup()
     clock.goto(0, -RADIUS)
     clock.setheading(0)
-    clock.color("white")
+    clock.color(fg)
     clock.pensize(3)
     clock.pendown()
     clock.circle(RADIUS)
     clock.penup()
 
-    draw_ticks()
+    draw_ticks(fg)
 
-    # Chiffres 1 à 12
-    clock.color("white")
+    # Chiffres 1 a 12
+    clock.color(fg)
     for h in range(1, 13):
         x, y = polar(155, h * 30)
-        clock.goto(x, y - 12)  # -12 pour centrer verticalement le texte
+        clock.goto(x, y - 12)
         clock.write(h, align="center", font=("Arial", 16, "bold"))
+
+    # Date du jour
+    date_txt = f"{JOURS[now.tm_wday]} {now.tm_mday} {MOIS[now.tm_mon - 1]} {now.tm_year}"
+    clock.goto(0, -70)
+    clock.write(date_txt, align="center", font=("Arial", 11, "normal"))
 
 def draw_hand(angle, length, color, width):
     clock.penup()
@@ -63,11 +78,13 @@ def draw_hand(angle, length, color, width):
     clock.forward(length)
     clock.penup()
 
-def update():
+def draw():
+    fg = THEMES[theme]["fg"]
     clock.clear()
-    draw_face()
 
     now = time.localtime()
+    draw_face(fg, now)
+
     sec = now.tm_sec
     min_ = now.tm_min
     hour = now.tm_hour % 12
@@ -82,10 +99,21 @@ def update():
 
     # Point central pour cacher la jonction des aiguilles
     clock.goto(0, 0)
-    clock.dot(12, "white")
+    clock.dot(12, fg)
 
     wn.update()
+
+def update():
+    draw()
     wn.ontimer(update, 1000)
 
+def toggle_theme(x, y):
+    global theme
+    theme = "clair" if theme == "sombre" else "sombre"
+    wn.bgcolor(THEMES[theme]["bg"])
+    draw()  # redessine tout de suite, sans attendre la prochaine seconde
+
+wn.onclick(toggle_theme)
+
 update()
-wn.mainloop() 
+wn.mainloop()
