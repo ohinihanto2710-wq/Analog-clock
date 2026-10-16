@@ -4,6 +4,11 @@ Horloge analogique en Python avec turtle : cadran, chiffres 1 à 12, aiguilles h
 
 ## Lancer
 
+Prérequis : `pip install tzdata` (Windows).
+
+- Clic dans la fenêtre : thème clair / sombre
+- Touche `T` : changer de ville (Cotonou, Paris, New York, Tokyo)
+
     python clock_application.py
 
     

@@ -1,6 +1,7 @@
 import turtle
-import time
 import math
+from datetime import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 RADIUS = 200
 
@@ -9,6 +10,20 @@ THEMES = {
     "clair": {"bg": "white", "fg": "black"},
 }
 theme = "sombre"
+
+ZONES = [
+    ("Cotonou", "Africa/Porto-Novo"),
+    ("Paris", "Europe/Paris"),
+    ("New York", "America/New_York"),
+    ("Tokyo", "Asia/Tokyo"),
+]
+zone_index = 0
+
+# Verifie que les fuseaux sont disponibles (paquet tzdata sous Windows)
+try:
+    TZ = [(city, ZoneInfo(name)) for city, name in ZONES]
+except ZoneInfoNotFoundError:
+    raise SystemExit("Fuseaux introuvables. Installe-les avec : pip install tzdata")
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
@@ -43,7 +58,12 @@ def draw_ticks(fg):
         clock.goto(x2, y2)
     clock.penup()
 
-def draw_face(fg, now):
+def write_text(txt, y, size, style, fg):
+    clock.color(fg)
+    clock.goto(0, y)
+    clock.write(txt, align="center", font=("Arial", size, style))
+
+def draw_face(fg, now, city):
     # Cercle centre sur (0, 0)
     clock.penup()
     clock.goto(0, -RADIUS)
@@ -57,16 +77,18 @@ def draw_face(fg, now):
     draw_ticks(fg)
 
     # Chiffres 1 a 12
-    clock.color(fg)
     for h in range(1, 13):
         x, y = polar(155, h * 30)
         clock.goto(x, y - 12)
+        clock.color(fg)
         clock.write(h, align="center", font=("Arial", 16, "bold"))
 
-    # Date du jour
-    date_txt = f"{JOURS[now.tm_wday]} {now.tm_mday} {MOIS[now.tm_mon - 1]} {now.tm_year}"
-    clock.goto(0, -70)
-    clock.write(date_txt, align="center", font=("Arial", 11, "normal"))
+    # Date, heure numerique et ville
+    date_txt = f"{JOURS[now.weekday()]} {now.day} {MOIS[now.month - 1]} {now.year}"
+    time_txt = f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+    write_text(date_txt, -60, 11, "normal", fg)
+    write_text(time_txt, -95, 16, "bold", fg)
+    write_text(city, -122, 11, "normal", fg)
 
 def draw_hand(angle, length, color, width):
     clock.penup()
@@ -80,18 +102,14 @@ def draw_hand(angle, length, color, width):
 
 def draw():
     fg = THEMES[theme]["fg"]
+    city, tz = TZ[zone_index]
+    now = datetime.now(tz)
     clock.clear()
+    draw_face(fg, now, city)
 
-    now = time.localtime()
-    draw_face(fg, now)
-
-    sec = now.tm_sec
-    min_ = now.tm_min
-    hour = now.tm_hour % 12
-
-    sec_angle = sec * 6
-    min_angle = min_ * 6 + sec * 0.1
-    hour_angle = hour * 30 + min_ * 0.5
+    sec_angle = now.second * 6
+    min_angle = now.minute * 6 + now.second * 0.1
+    hour_angle = (now.hour % 12) * 30 + now.minute * 0.5
 
     draw_hand(hour_angle, 100, "blue", 5)
     draw_hand(min_angle, 140, "green", 3)
@@ -111,9 +129,16 @@ def toggle_theme(x, y):
     global theme
     theme = "clair" if theme == "sombre" else "sombre"
     wn.bgcolor(THEMES[theme]["bg"])
-    draw()  # redessine tout de suite, sans attendre la prochaine seconde
+    draw()
+
+def next_zone():
+    global zone_index
+    zone_index = (zone_index + 1) % len(TZ)
+    draw()
 
 wn.onclick(toggle_theme)
+wn.onkey(next_zone, "t")
+wn.listen()  # indispensable pour que le clavier soit pris en compte
 
 update()
 wn.mainloop()
