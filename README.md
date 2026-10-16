@@ -7,3 +7,5 @@ Horloge analogique en Python avec turtle : cadran, chiffres 1 à 12, aiguilles h
     python clock_application.py
 
     
+
+![Aperçu](screenshot.png)
