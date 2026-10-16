@@ -8,4 +8,4 @@ Horloge analogique en Python avec turtle : cadran, chiffres 1 à 12, aiguilles h
 
     
 
-![Aperçu](screenshot.png)
+<img src="screenshot.png" alt="Aperçu" width="400">
